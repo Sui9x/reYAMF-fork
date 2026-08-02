@@ -1,3 +1,5 @@
+/* Modified by Sui9x on 2026-06-27 */
+
 package com.mja.reyamf.xposed.services
 
 import android.annotation.SuppressLint
@@ -72,7 +74,7 @@ object YAMFManager : IYAMFManager.Stub() {
 
     private val windowList = mutableListOf<Int>()
     lateinit var config: Config
-    val configFile = File("/data/system/reYAMF.json")
+    val configFile = File("/data/system/reYAMF-fork.json")
     private var openWindowCount = 0
     private val iOpenCountListenerSet = mutableSetOf<IOpenCountListener>()
     lateinit var activityManagerService: Any

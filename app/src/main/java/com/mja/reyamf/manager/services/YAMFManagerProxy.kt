@@ -1,3 +1,5 @@
+/* Modified by Sui9x on 2026-06-27 */
+
 package com.mja.reyamf.manager.services
 
 import android.os.IBinder
@@ -63,7 +65,7 @@ object YAMFManagerProxy : IYAMFManager, DeathRecipient {
     }
 
     override fun getConfigJson(): String {
-        return service?.configJson ?: "{}"
+        return service?.configJson ?: com.mja.reyamf.common.gson.toJson(com.mja.reyamf.common.model.Config())
     }
 
     override fun updateConfig(newConfig: String) {

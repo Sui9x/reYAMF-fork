@@ -1,3 +1,5 @@
+/* Modified by Sui9x on 2026-06-27 */
+
 package com.mja.reyamf.xposed.utils
 
 import android.animation.Animator
@@ -194,6 +196,60 @@ fun animateResize(
         gson.fromJson(YAMFManager.configJson, YAMFConfig::class.java)
     }
     val adjustedDuration = (if (config.animationSpeed < 5100) config.animationSpeed else 300).toLong()
+
+    val widthAnimator = ValueAnimator.ofInt(startWidth, endWidth).apply {
+        addUpdateListener { animator ->
+            val value = animator.animatedValue as Int
+            val params = view.layoutParams
+            params.width = value
+            view.layoutParams = params
+        }
+    }
+
+    val heightAnimator = ValueAnimator.ofInt(startHeight, endHeight).apply {
+        addUpdateListener { animator ->
+            val value = animator.animatedValue as Int
+            val params = view.layoutParams
+            params.height = value
+            view.layoutParams = params
+        }
+    }
+
+    AnimatorSet().apply {
+        playTogether(widthAnimator, heightAnimator)
+        duration = adjustedDuration
+        interpolator = AccelerateDecelerateInterpolator()
+        addListener(object : AnimatorListenerAdapter() {
+            override fun onAnimationEnd(animation: Animator) {
+                onEnd?.invoke()
+            }
+        })
+        start()
+    }
+}
+
+fun animateResize2(
+    view: View,
+    startWidth: Int,
+    endWidth: Int,
+    startHeight: Int,
+    endHeight: Int,
+    context: Context,
+    baseDuration: Long = 150L,
+    onEnd: (() -> Unit)? = null
+) {
+    val scale = try {
+        Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE)
+    } catch (e: Settings.SettingNotFoundException) {
+        1.0f // fallback to normal scale if not found
+    }
+
+    val config = try {
+        gson.fromJson(YAMFManagerProxy.configJson, YAMFConfig::class.java)
+    } catch (e: Exception) {
+        gson.fromJson(YAMFManager.configJson, YAMFConfig::class.java)
+    }
+    val adjustedDuration = (if (config.animationSpeed < 5100) config.animationSpeed else 150).toLong()
 
     val widthAnimator = ValueAnimator.ofInt(startWidth, endWidth).apply {
         addUpdateListener { animator ->

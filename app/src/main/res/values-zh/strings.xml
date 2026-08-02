@@ -1,5 +1,7 @@
+<!--Modified by Sui9x on 2026-06-27-->
+
 <resources>
-    <string name="app_name">reYAMF</string>
+    <string name="app_name">reYAMF-fork</string>
     <string name="details">详情</string>
     <string name="unknown_error">未知错误</string>
     <string name="activated">模块已激活</string>
@@ -37,8 +39,8 @@
     <string name="note_content"><b>如果你无法接受任何应用的权限请求，</b> 这是因为侧边栏覆盖了屏幕</string>
     <string name="close_butt_desc">点击侧边栏上的此按钮关闭侧边栏</string>
     <string name="restart_butt_desc">或点击此按钮临时关闭侧边栏，侧边栏会在5秒后重新出现</string>
-    <string name="reyamf">reYAMF</string>
-    <string name="a_yamf_fork">a YAMF fork</string>
+    <string name="reyamf">reYAMF-fork</string>
+    <string name="a_yamf_fork"> forked by Sui9x</string>
     <string name="view_type">视图类型</string>
     <string name="dpi_density">DPI 密度</string>
     <string name="flags">高级参数</string>
@@ -58,7 +60,7 @@
     <string name="sidebar_transparency">侧边栏透明度</string>
     <string name="_80">80</string>
     <string name="window_rounded_corner">窗口圆角大小</string>
-    <string name="_20">20</string>
+    <string name="_12">12</string>
     <string name="sidebar_position">右置侧边栏</string>
     <string name="app_added_to_sidebar">App added to sidebar</string>
     <string name="super_description">Super</string>

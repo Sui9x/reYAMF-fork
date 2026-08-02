@@ -1,3 +1,5 @@
+/* Modified by Sui9x on 2026-06-27 */
+
 package com.mja.reyamf.common.model
 
 data class Config(
@@ -33,7 +35,7 @@ data class Config(
     var launchSideBarAtBoot: Boolean = false,
     var enableSidebar: Boolean = true,
     var sidebarTransparency: Int = 80,
-    var windowRoundedCorner: Int = 20,
+    var windowRoundedCorner: Int = 12,
     var sidebarPosition: Boolean = false,
     var animationSpeed: Float = 5100f
 ) {

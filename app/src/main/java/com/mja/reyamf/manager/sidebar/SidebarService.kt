@@ -1,9 +1,14 @@
+/* Modified by Sui9x on 2026-06-27 */
+
 package com.mja.reyamf.manager.sidebar
 
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.IntentFilter
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.graphics.PixelFormat
@@ -17,6 +22,7 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.Surface
 import android.view.WindowManager
+import android.view.ViewConfiguration
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.core.app.NotificationCompat
 import androidx.core.graphics.toColorInt
@@ -29,6 +35,7 @@ import com.mja.reyamf.manager.services.YAMFManagerProxy
 import com.mja.reyamf.manager.sidebar.SidebarMenuService.Companion.SERVICE_NOTIFICATION_ID
 import com.mja.reyamf.manager.sidebar.SidebarMenuService.Companion.SERVICE_NOTIF_CHANNEL_ID
 import com.mja.reyamf.xposed.utils.vibratePhone
+import com.mja.reyamf.xposed.utils.dpToPx
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -57,6 +64,28 @@ class SidebarService : Service() {
     private var isShown = false
 
     private var colorString = "#FFFFFF"
+    
+    private var movedDuringTouch = false
+
+    private val touchSlop by lazy {
+        ViewConfiguration.get(this).scaledTouchSlop
+    }
+    
+    private var receiverRegistered = false
+
+    private val bringToFrontReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (intent.action == ACTION_BRING_TO_FRONT) {
+                bringSidebarToFront()
+            }
+        }
+    }
+    
+    companion object {
+        const val ACTION_BRING_TO_FRONT =
+            "com.mja.reyamf.manager.sidebar.action.BRING_TO_FRONT"
+    }
+    
 
     override fun onBind(intent: Intent): IBinder? {
         return null
@@ -65,10 +94,12 @@ class SidebarService : Service() {
     override fun onCreate() {
         super.onCreate()
 
+        /*
         if (!isServiceRunning) {
             isServiceRunning = true
             initSidebar()
         }
+        */
     }
 
     private fun initSidebar() {
@@ -91,7 +122,7 @@ class SidebarService : Service() {
         params.gravity = Gravity.NO_GRAVITY
 
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
-        windowManager.addView(binding.root, params)
+        //windowManager.addView(binding.root, params)
 
         params.x = if (config.sidebarPosition) 100000 else -100000
 
@@ -109,6 +140,7 @@ class SidebarService : Service() {
             }
             else -> 0
         }
+        windowManager.addView(binding.root, params)
 
         colorString = if (config.sidebarTransparency == 100) {
             "#AAAAAA"
@@ -119,6 +151,7 @@ class SidebarService : Service() {
         }
 
         handleSidebar()
+        registerBringToFrontReceiver()
 
         setServiceState(this, ServiceState.STARTED)
 //        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
@@ -135,6 +168,64 @@ class SidebarService : Service() {
 //                createNotification()
 //            )
 //        }
+    }
+    
+    private fun registerBringToFrontReceiver() {
+        if (receiverRegistered) return
+
+        val filter = IntentFilter(ACTION_BRING_TO_FRONT)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(
+                bringToFrontReceiver,
+                filter,
+                RECEIVER_EXPORTED
+            )
+        } else {
+            registerReceiver(bringToFrontReceiver, filter)
+        }
+
+        receiverRegistered = true
+    }
+
+    private fun unregisterBringToFrontReceiver() {
+        if (!receiverRegistered) return
+
+        runCatching {
+            unregisterReceiver(bringToFrontReceiver)
+        }
+    
+        receiverRegistered = false
+    }
+    
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (!isServiceRunning) {
+            isServiceRunning = true
+            initSidebar()
+        }
+
+        if (intent?.action == ACTION_BRING_TO_FRONT) {
+            bringSidebarToFront()
+        }
+
+        return START_STICKY
+    }
+
+    private fun bringSidebarToFront() {
+        if (!::binding.isInitialized ||
+            !::windowManager.isInitialized ||
+            !::params.isInitialized
+        ) {
+            return
+        }
+
+        runCatching {
+            windowManager.removeView(binding.root)
+        }
+
+        runCatching {
+            windowManager.addView(binding.root, params)
+        }
     }
 
     private fun handleSidebar() {
@@ -153,6 +244,13 @@ class SidebarService : Service() {
                 MotionEvent.ACTION_UP -> {
                     openApp(event)
                     v.performClick()
+                    true
+                }
+                
+                MotionEvent.ACTION_CANCEL -> {
+                    job?.cancel()
+                    movable = false
+                    movedDuringTouch = false
                     true
                 }
 
@@ -195,6 +293,7 @@ class SidebarService : Service() {
         }
     }
 
+    
     private fun openApp(event: MotionEvent): Boolean {
         job?.cancel()
         movable = false
@@ -214,7 +313,41 @@ class SidebarService : Service() {
         }
         return true
     }
+    
+    
+    /*
+    private fun openApp(event: MotionEvent): Boolean {
+        job?.cancel()
 
+        val dx = event.rawX - initialTouchX
+        val dy = event.rawY - initialTouchY
+        val distanceSq = dx * dx + dy * dy
+        val isTap = distanceSq <= touchSlop * touchSlop
+
+        val swipeThreshold = 80.dpToPx().toFloat()
+
+        val isOpenSwipe = if (config.sidebarPosition) {
+            dx < -swipeThreshold
+        } else {
+            dx > swipeThreshold
+        }
+
+        val shouldOpen = isTap || isOpenSwipe
+
+        movable = false
+
+        if (shouldOpen) {
+            vibratePhone(this)
+            startService(Intent(this, SidebarMenuService::class.java))
+            stopService()
+            isShown = false
+        }
+
+        return true
+    }
+    */
+    
+    /*
     private fun moveSidebar(event: MotionEvent): Boolean {
         swipeX = event.rawX.toInt()
         params.y = initialY + (event.rawY - initialTouchY).toInt()
@@ -240,14 +373,65 @@ class SidebarService : Service() {
         }
         return true
     }
+    */
+    
+    private fun moveSidebar(event: MotionEvent): Boolean {
+        val dx = event.rawX - initialTouchX
+        val dy = event.rawY - initialTouchY
 
+        if (dx * dx + dy * dy > touchSlop * touchSlop) {
+            movedDuringTouch = true
+        }
 
+        if (movable) {
+            params.y = initialY + dy.toInt()
+
+            windowManager.updateViewLayout(binding.root, params)
+
+            val displayManager = getSystemService(DISPLAY_SERVICE) as DisplayManager
+            val display = displayManager.getDisplay(Display.DEFAULT_DISPLAY)
+
+            display?.let {
+                when (it.rotation) {
+                    Surface.ROTATION_0, Surface.ROTATION_180 -> {
+                        config.portraitY = params.y
+                    }
+                    Surface.ROTATION_90, Surface.ROTATION_270 -> {
+                        config.landscapeY = params.y
+                    }
+                }
+            }
+
+            YAMFManagerProxy.updateConfig(gson.toJson(config))
+        }
+
+        return true
+    }
+
+    /*
     private fun storeTouchs(event: MotionEvent): Boolean {
         startCounter()
         initialX = params.x
         initialY = params.y
         initialTouchX = (event.rawX)
         initialTouchY = (event.rawY)
+        return true
+    }
+    */
+    
+    private fun storeTouchs(event: MotionEvent): Boolean {
+        job?.cancel()
+
+        movable = false
+        movedDuringTouch = false
+
+        startCounter()
+
+        initialX = params.x
+        initialY = params.y
+        initialTouchX = event.rawX
+        initialTouchY = event.rawY
+
         return true
     }
 
@@ -277,6 +461,8 @@ class SidebarService : Service() {
 
     private fun stopService() {
         try {
+            unregisterBringToFrontReceiver()
+            
             windowManager.removeView(binding.root)
             stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf()
@@ -284,5 +470,10 @@ class SidebarService : Service() {
             Log.d("reYAMF", "Sidebar killed")
         }
         setServiceState(this, ServiceState.STOPPED)
+    }
+    
+    override fun onDestroy() {
+        unregisterBringToFrontReceiver()
+        super.onDestroy()
     }
 }

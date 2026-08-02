@@ -1,5 +1,7 @@
+<!--Modified by Sui9x on 2026-06-27-->
+
 <resources>
-    <string name="app_name">reYAMF</string>
+    <string name="app_name">reYAMF-fork</string>
     <string name="details">Details</string>
     <string name="unknown_error">Unknown Error</string>
     <string name="activated">Module Is Activated!</string>
@@ -37,8 +39,8 @@
     <string name="note_content"><b>IF YOU CAN\'T ACCEPT ANY APP PERMISSION REQUEST.</b> That\'s because the sidebar is overlaying the screen.</string>
     <string name="close_butt_desc">Close the sidebar using this button on the sidebar</string>
     <string name="restart_butt_desc">Or use this button to close sidebar for 5 seconds. Sidebar will reappaer automatically</string>
-    <string name="reyamf">reYAMF</string>
-    <string name="a_yamf_fork">a YAMF fork</string>
+    <string name="reyamf">reYAMF-fork</string>
+    <string name="a_yamf_fork"> forked by Sui9x</string>
     <string name="view_type">View Type</string>
     <string name="dpi_density">DPI Density</string>
     <string name="flags">Flags</string>
@@ -58,7 +60,7 @@
     <string name="sidebar_transparency">Sidebar Transparency</string>
     <string name="_80">80</string>
     <string name="window_rounded_corner">Window Rounded Corner</string>
-    <string name="_20">20</string>
+    <string name="_12">12</string>
     <string name="sidebar_position">Sidebar Position</string>
     <string name="app_added_to_sidebar">App added to sidebar</string>
     <string name="super_description">Super</string>
